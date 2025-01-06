@@ -96,6 +96,16 @@ class Blob
     }
 
     /**
+     * Moves the Blob data pointer to the beginning of the data.
+     * https://www.php.net/manual/en/function.rewind.php
+     */
+    public function rewind(): self
+    {
+        rewind($this->resource);
+        return $this;
+    }
+
+    /**
      * Moves the Blob's data pointer to the offset.
      * https://www.php.net/manual/en/function.fseek.php
      */
