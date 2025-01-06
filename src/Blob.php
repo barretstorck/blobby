@@ -69,11 +69,21 @@ class Blob
     }
 
     /**
-     *
+     * Closes the resource for the Blob data.
+     * https://www.php.net/manual/en/function.fclose.php
      */
     public function close(): bool
     {
         return fclose($this->resource);
+    }
+
+    /**
+     * Check if the data pointer is at the end of the Blob
+     * https://www.php.net/manual/en/function.feof.php
+     */
+    public function eof(): bool
+    {
+        return feof($this->resource);
     }
 
     /**
@@ -86,6 +96,34 @@ class Blob
     }
 
     /**
+     * Moves the Blob's data pointer to the offset.
+     * https://www.php.net/manual/en/function.fseek.php
+     */
+    public function seek(int $offset, int $whence = SEEK_SET): self
+    {
+        fseek($this->resource, $offset, $whence);
+        return $this;
+    }
+
+    /**
+     * Returns the Blob data pointer's current position.
+     * https://www.php.net/manual/en/function.ftell.php
+     */
+    public function tell(): int
+    {
+        return ftell($this->resource);
+    }
+
+    /**
+     *
+     */
+    public function truncate(int $size = 0): self
+    {
+        ftruncate($this->resource, $size);
+        return $this;
+    }
+
+    /**
      * Write string data into the Blob.
      * https://www.php.net/manual/en/function.fwrite.php
      */
@@ -94,14 +132,7 @@ class Blob
         return fwrite($this->resource, $input, $length);
     }
 
-    /**
-     * Check if the pointer is at the end of the Blob
-     * https://www.php.net/manual/en/function.feof.php
-     */
-    public function eof(): bool
-    {
-        return feof($this->resource);
-    }
+
 
     /**
      * Split the Blob data into chunks.
