@@ -1,0 +1,38 @@
+{
+    "name": "barretstorck/blobby",
+    "type": "library",
+    "description": "A Binary Large Object (BLOB) PHP library with storage drivers for common file destinations",
+    "license": "MIT",
+    "keywords": [
+        "blob",
+        "binary large object",
+        "binary",
+        "file"
+    ],
+    "authors": [
+        {
+            "name": "Barret Storck",
+            "homepage": "https://github.com/barretstorck"
+        }
+    ],
+    "require": {
+        
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10",
+        "squizlabs/php_codesniffer": "^3.0"
+    },
+    "provide": {
+        
+    },
+    "autoload": {
+        "psr-4": {
+            "BarretStorck\\Blobby\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BarretStorck\\Blobby\\Tests\\": "tests/"
+        }
+    }
+}
