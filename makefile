@@ -30,6 +30,13 @@ test:
 				--coverage-filter src \
 				--show-uncovered-for-coverage-text \
 				--path-coverage \
+				--display-incomplete \
+				--display-skipped \
+				--display-deprecations \
+				--display-phpunit-deprecations \
+				--display-errors \
+				--display-notices \
+				--display-warning \
 				tests
 
 lint:
