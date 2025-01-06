@@ -10,15 +10,16 @@ use Generator;
  */
 class Blob
 {
-    const DEFAULT_CHUNK_SIZE = 8192;
+    const DEFAULT_BUFFER_SIZE = 8192;
 
     protected $resource;
-    protected int $chunkSize;
+    protected int $bufferSize;
+    protected bool|int $writeResult = 0;
 
     /**
      *
      */
-    public function __construct($resource = null, null|int $chunkSize = null)
+    public function __construct($resource = null, null|int $bufferSize = null)
     {
         // If the constructor wasn't given an existing file resource
         // then create one using PHP's temporary space.
@@ -27,37 +28,45 @@ class Blob
         }
 
         $this->resource = $resource;
-        $this->setChunkSize($chunkSize);
+        $this->setBufferSize($bufferSize);
     }
 
     /**
      *
      */
-    public static function open(string $filename, string $mode, null|int $chunkSize = null, bool $use_include_path = false, $context = null): static
+    public static function open(string $filename, string $mode, null|int $bufferSize = null, bool $use_include_path = false, $context = null): static
     {
         $resource = fopen($filename, $mode, $use_include_path, $context);
-        return new static($resource, $chunkSize);
+        return new static($resource, $bufferSize);
     }
 
     /**
      *
      */
-    public function setChunkSize(null|int $input = null): self
+    public function setBufferSize(null|int $input = null): self
     {
         if (is_null($input) || $input <= 0) {
-            $input = static::DEFAULT_CHUNK_SIZE;
+            $input = static::DEFAULT_BUFFER_SIZE;
         }
 
-        $this->chunkSize = $input;
+        $this->bufferSize = $input;
         return $this;
     }
 
     /**
      *
      */
-    public function getChunkSize(): int
+    public function getBufferSize(): int
     {
-        return $this->chunkSize;
+        return $this->bufferSize;
+    }
+
+    /**
+     *
+     */
+    public function getWriteResult(): bool|int
+    {
+        return $this->writeResult;
     }
 
     /**
@@ -109,9 +118,10 @@ class Blob
      * to the Blob's data.
      * https://www.php.net/manual/en/function.fputcsv.php
      */
-    public function putcsv(array $fields, string $separator = ',', string $enclosure = '\"', string $escape = '\\', string $eol = "\n"): int
+    public function putcsv(array $fields, string $separator = ',', string $enclosure = '"', string $escape = '\\', string $eol = "\n"): self
     {
-        return fputcsv($this->resource, $fields, $separator, $enclosure, $escape, $eol);
+        $this->writeResult = fputcsv($this->resource, $fields, $separator, $enclosure, $escape, $eol);
+        return $this;
     }
 
     /**
@@ -120,7 +130,7 @@ class Blob
      */
     public function read(null|int $length = null): string
     {
-        return fread($this->resource, $length ?? $this->getChunkSize());
+        return fread($this->resource, $length ?? $this->getBufferSize());
     }
 
     /**
@@ -181,7 +191,7 @@ class Blob
      */
     public function truncate(int $size = 0): self
     {
-        ftruncate($this->resource, $size);
+        $this->writeResult = ftruncate($this->resource, $size);
         return $this;
     }
 
@@ -189,14 +199,15 @@ class Blob
      * Write string data into the Blob.
      * https://www.php.net/manual/en/function.fwrite.php
      */
-    public function write($input, null|int $length = null): int
+    public function write($input, null|int $length = null): self
     {
         if (!is_null($length) && $length <= 0) {
             throw new InvalidArgumentException('Blob::write() requires $length to be null or a positive integer');
         }
 
         if (is_string($input)) {
-            return fwrite($this->resource, $input, $length);
+            $this->writeResult = fwrite($this->resource, $input, $length);
+            return $this;
         }
 
         if ($input instanceof Blob) {
@@ -206,16 +217,26 @@ class Blob
         if (is_resource($input)) {
             $bytes = 0;
             while (!feof($input) && (is_null($length) || $bytes < $length)) {
-                $bufferSize = $this->getChunkSize();
+                $bufferSize = $this->getBufferSize();
                 if (!is_null($length)) {
                     $remainingBytes = $length - $bytes;
                     $bufferSize = min($bufferSize, $remainingBytes);
                 }
 
                 $buffer = fread($input, $bufferSize);
-                $bytes += fwrite($this->resource, $buffer);
+                $result = fwrite($this->resource, $buffer);
+
+                // If something went wrong
+                // then record the result
+                // and immediately return
+                if ($result === false) {
+                    $this->writeResult = $result;
+                    return $this;
+                }
+                $bytes += $result;
             }
-            return $bytes;
+            $this->writeResult = $bytes;
+            return $this;
         }
 
         throw new InvalidArgumentException('Blob::write() requires $input to be aa string, Blob, or resource type.');
@@ -227,7 +248,7 @@ class Blob
     public function toChunks(null|int $size = null): Generator
     {
         while (!$this->eof()) {
-            yield $this->read($size ?? $this->getChunkSize());
+            yield $this->read($size ?? $this->getBufferSize());
         }
     }
 }

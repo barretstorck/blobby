@@ -51,12 +51,12 @@ class BlobTest extends TestCase
     /**
      *
      */
-    public static function provideGetSetChunkSize(): array
+    public static function provideGetSetBufferSize(): array
     {
         return [
             'null' => [
                 'given' => null,
-                'expect' => Blob::DEFAULT_CHUNK_SIZE,
+                'expect' => Blob::DEFAULT_BUFFER_SIZE,
             ],
             'One' => [
                 'given' => 1,
@@ -64,7 +64,7 @@ class BlobTest extends TestCase
             ],
             'Negative One' => [
                 'given' => -1,
-                'expect' => Blob::DEFAULT_CHUNK_SIZE,
+                'expect' => Blob::DEFAULT_BUFFER_SIZE,
             ],
         ];
     }
@@ -72,15 +72,15 @@ class BlobTest extends TestCase
     /**
      *
      */
-    #[DataProvider('provideGetSetChunkSize')]
-    public function testGetSetChunkSize($given, $expect): void
+    #[DataProvider('provideGetSetBufferSize')]
+    public function testGetSetBufferSize($given, $expect): void
     {
         // Given
         $blob = new Blob();
 
         // When
-        $blob->setChunkSize($given);
-        $actual = $blob->getChunkSize();
+        $blob->setBufferSize($given);
+        $actual = $blob->getBufferSize();
 
         // Then
         $this->assertEquals(
@@ -217,14 +217,13 @@ class BlobTest extends TestCase
         $blob = new Blob();
 
         // When
-        $actual = $blob->write($data);
+        $blob->write($data);
 
         // Then
         $this->assertEquals(
             expected: strlen($data),
-            actual: $actual,
+            actual: $blob->getWriteResult(),
         );
-
 
         $this->assertEquals(
             expected: $data,
@@ -240,23 +239,129 @@ class BlobTest extends TestCase
         // Given
         $data = 'Hello world';
         $blob1 = new Blob();
-        $blob1->write($data);
-        $blob1->rewind();
+        $blob1
+            ->write($data)
+            ->rewind();
         $blob2 = new Blob();
 
         // When
-        $actual = $blob2->write($blob1);
+        $blob2->write($blob1);
 
         // Then
         $this->assertEquals(
             expected: strlen($data),
-            actual: $actual,
+            actual: $blob2->getWriteResult(),
         );
-
 
         $this->assertEquals(
             expected: $data,
             actual: $blob2->rewind()->read(),
+        );
+    }
+
+    /**
+     *
+     */
+    public function testGetCsv(): void
+    {
+        // Given
+        $fields = [
+            'foo',
+            'bar',
+            'fizz',
+            'buzz',
+        ];
+        $resource = fopen('php://temp', 'r+');
+        fputcsv(
+            stream: $resource,
+            fields: $fields,
+            escape: '\\',
+        );
+        rewind($resource);
+
+        $blob = new Blob($resource);
+
+        // When
+        $actual = $blob->getcsv();
+
+        // Then
+        $this->assertEquals(
+            expected: $fields,
+            actual: $actual,
+        );
+    }
+
+    /**
+     *
+     */
+    public function testPutCsv(): void
+    {
+        // Given
+        $fields = [
+            'foo',
+            'bar',
+            'fizz',
+            'buzz',
+        ];
+        $resource = fopen('php://temp', 'r+');
+        $blob = new Blob($resource);
+
+        // When
+        $blob->putcsv($fields);
+
+        // Then
+        rewind($resource);
+        $actual = fgetcsv(
+            stream: $resource,
+            escape: '\\',
+        );
+        $this->assertEquals(
+            expected: $fields,
+            actual: $actual,
+        );
+    }
+
+    /**
+     *
+     */
+    public function testRemaining(): void
+    {
+        // Given
+        $data = 'Hello world';
+        $resource = fopen('php://temp', 'r+');
+        fwrite($resource, $data);
+        fseek($resource, 2);
+        $blob = new Blob($resource);
+
+        // When
+        $actual = $blob->remaining();
+
+        // Then
+        $this->assertEquals(
+            expected: 9,
+            actual: $actual,
+        );
+    }
+
+    /**
+     *
+     */
+    public function testSize(): void
+    {
+        // Given
+        $data = 'Hello world';
+        $resource = fopen('php://temp', 'r+');
+        fwrite($resource, $data);
+        fseek($resource, 2);
+        $blob = new Blob($resource);
+
+        // When
+        $actual = $blob->size();
+
+        // Then
+        $this->assertEquals(
+            expected: 11,
+            actual: $actual,
         );
     }
 }
