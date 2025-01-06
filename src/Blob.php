@@ -31,7 +31,7 @@ class Blob
     }
 
     /**
-     * 
+     *
      */
     public static function open(string $filename, string $mode, null|int $chunkSize = null, bool $use_include_path = false, $context = null): static
     {
@@ -61,7 +61,7 @@ class Blob
     }
 
     /**
-     * 
+     *
      */
     public function getResource()
     {
@@ -69,7 +69,7 @@ class Blob
     }
 
     /**
-     * 
+     *
      */
     public function close(): bool
     {
@@ -77,7 +77,8 @@ class Blob
     }
 
     /**
-     *
+     * Read data from the Blob into a string.
+     * https://www.php.net/manual/en/function.fread.php
      */
     public function read(null|int $length = null): string
     {
@@ -85,10 +86,30 @@ class Blob
     }
 
     /**
-     *
+     * Write string data into the Blob.
+     * https://www.php.net/manual/en/function.fwrite.php
      */
     public function write(string $input, null|int $length = null): int
     {
         return fwrite($this->resource, $input, $length);
+    }
+
+    /**
+     * Check if the pointer is at the end of the Blob
+     * https://www.php.net/manual/en/function.feof.php
+     */
+    public function eof(): bool
+    {
+        return feof($this->resource);
+    }
+
+    /**
+     * Split the Blob data into chunks.
+     */
+    public function toChunks(null|int $size = null): Generator
+    {
+        while (!$this->eof()) {
+            yield $this->read($size ?? $this->getChunkSize());
+        }
     }
 }
