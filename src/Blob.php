@@ -24,7 +24,7 @@ class Blob
         // If the constructor wasn't given an existing file resource
         // then create one using PHP's temporary space.
         if (!is_resource($resource)) {
-            $resource = fopen('php://temp', 'r+');
+            $resource = fopen('php://temp', 'w+b');
         }
 
         $this->resource = $resource;

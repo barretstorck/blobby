@@ -62,9 +62,17 @@ class BlobTest extends TestCase
                 'given' => 1,
                 'expect' => 1,
             ],
+            'Zero' => [
+                'given' => 0,
+                'expect' => Blob::DEFAULT_BUFFER_SIZE,
+            ],
             'Negative One' => [
                 'given' => -1,
                 'expect' => Blob::DEFAULT_BUFFER_SIZE,
+            ],
+            'Ten' => [
+                'given' => 10,
+                'expect' => 10,
             ],
         ];
     }
@@ -76,10 +84,9 @@ class BlobTest extends TestCase
     public function testGetSetBufferSize($given, $expect): void
     {
         // Given
-        $blob = new Blob();
+        $blob = new Blob(bufferSize: $given);
 
         // When
-        $blob->setBufferSize($given);
         $actual = $blob->getBufferSize();
 
         // Then
