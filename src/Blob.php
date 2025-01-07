@@ -4,11 +4,12 @@ namespace BarretStorck\Blobby;
 
 use InvalidArgumentException;
 use Generator;
+use Stringable;
 
 /**
  *
  */
-class Blob
+class Blob implements Stringable
 {
     const DEFAULT_BUFFER_SIZE = 8192;
 
@@ -34,10 +35,61 @@ class Blob
     /**
      *
      */
+    public static function make($resource = null, null|int $bufferSize = null): static
+    {
+        return new static($resource, $bufferSize);
+    }
+
+    /**
+     *
+     */
     public static function open(string $filename, string $mode, null|int $bufferSize = null, bool $use_include_path = false, $context = null): static
     {
         $resource = fopen($filename, $mode, $use_include_path, $context);
         return new static($resource, $bufferSize);
+    }
+
+    /**
+     *
+     */
+    public function __clone()
+    {
+        $sourceResource = $this->resource;
+        $sourceBufferSize = $this->bufferSize;
+        $sourceWriteResult = $this->writeResult;
+
+        $sourcePointer = ftell($sourceResource);
+        rewind($sourceResource);
+
+        $destinationResource = fopen('php://temp', 'w+b');
+
+        while (!feof($sourceResource)) {
+            $chunk = fread($sourceResource, $sourceBufferSize);
+            fwrite($destinationResource, $chunk);
+        }
+
+        fseek($sourceResource, $sourcePointer);
+        fseek($destinationResource, $sourcePointer);
+
+        $this->resource = $destinationResource;
+        $this->bufferSize = $sourceBufferSize;
+        $this->writeResult = $sourceWriteResult;
+    }
+
+    /**
+     *
+     */
+    public function __toString(): string
+    {
+
+        $originalPosition = $this->tell();
+        $this->rewind();
+        $string = '';
+        foreach ($this->toChunks() as $chunk) {
+            $string .= $chunk;
+        }
+        $this->seek($originalPosition);
+        return $string;
     }
 
     /**

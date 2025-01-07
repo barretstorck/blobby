@@ -3,11 +3,9 @@
 namespace BarretStorck\Blobby\Sources;
 
 use BarretStorck\Blobby\Blob;
-use BarretStorck\Blobby\ReadableBlobSourceInterface;
-use BarretStorck\Blobby\WriteableBlobSourceInterface;
-use BarretStorck\Blobby\DeleteableBlobSourceInterface;
+use BarretStorck\Blobby\BlobSourceInterface;
 
-class NullSource implements ReadableBlobSourceInterface, WriteableBlobSourceInterface, DeleteableBlobSourceInterface
+class NullSource implements BlobSourceInterface
 {
     /**
      *
