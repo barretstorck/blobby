@@ -3,11 +3,9 @@
 namespace BarretStorck\Blobby\Sources;
 
 use BarretStorck\Blobby\Blob;
-use BarretStorck\Blobby\ReadableBlobSourceInterface;
-use BarretStorck\Blobby\WriteableBlobSourceInterface;
-use BarretStorck\Blobby\DeleteableBlobSourceInterface;
+use BarretStorck\Blobby\BlobSourceInterface;
 
-class FileSystem implements ReadableBlobSourceInterface, WriteableBlobSourceInterface, DeleteableBlobSourceInterface
+class FileSystem implements BlobSourceInterface
 {
     protected null|string $path = null;
 
@@ -42,10 +40,12 @@ class FileSystem implements ReadableBlobSourceInterface, WriteableBlobSourceInte
     public function open(): Blob
     {
         $resource = fopen($this->path, 'rb');
-        $blob = new Blob();
-        $blob->write($resource);
+
+        $blob = Blob::make()
+            ->write($resource)
+            ->rewind();
+
         fclose($resource);
-        $blob->rewind();
         return $blob;
     }
 

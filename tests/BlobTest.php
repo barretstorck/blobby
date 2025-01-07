@@ -371,4 +371,84 @@ class BlobTest extends TestCase
             actual: $actual,
         );
     }
+
+    /**
+     *
+     */
+    public function testClone(): void
+    {
+        // Given
+        $blob1 = new Blob();
+        $data = 'Hello world';
+        $pointer = 4;
+        $blob1->write($data);
+        $blob1->seek($pointer);
+
+        // When
+        $blob2 = clone $blob1;
+
+        // Then
+        // The source Blob should have it's pointer in the same position as
+        // before
+        $this->assertEquals(
+            expected: $pointer,
+            actual: $blob1->tell(),
+        );
+
+        // The destination Blob should have it's pointer in the same position as
+        // the source.
+        $this->assertEquals(
+            expected: $pointer,
+            actual: $blob2->tell(),
+        );
+
+        // Rewind both so we can fetch their full contents.
+        $blob1->rewind();
+        $blob2->rewind();
+
+        // The source Blob still has it's original contents unmodified.
+        $this->assertEquals(
+            expected: $data,
+            actual: $blob1->read(),
+        );
+
+        // The destination Blob has a complete copy of the source's contents.
+        $this->assertEquals(
+            expected: $data,
+            actual: $blob2->read(),
+        );
+
+        // Make sure that both Blobs are different objects.
+        $this->assertNotSame(
+            expected: $blob1,
+            actual: $blob2,
+        );
+    }
+
+    /**
+     *
+     */
+    public function testToString(): void
+    {
+        // Given
+        $data = 'Hello world';
+        $pointer = 4;
+        $blob = new Blob();
+        $blob->write($data);
+        $blob->seek($pointer);
+
+        // When
+        $actual = strval($blob);
+
+        // Then
+        $this->assertEquals(
+            expected: $data,
+            actual: $actual,
+        );
+
+        $this->assertEquals(
+            expected: $pointer,
+            actual: $blob->tell(),
+        );
+    }
 }
