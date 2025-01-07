@@ -72,4 +72,5 @@ format:
 clean:
 	rm -rf \
 		composer.lock \
+		code_coverage \
 		vendor
